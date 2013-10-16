@@ -1,4 +1,5 @@
 IMAP-filter
 ===========
 
-Service for filtering IMAP box according to user-specified rules.
+Highly configurable Python software for performing various actions on IMAP
+mailboxes (e.g. mail filtering).
