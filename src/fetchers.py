@@ -32,7 +32,8 @@ class BaseFetcher(BaseConn):
             return ret
 
     def fetch_latest(self, directory, max_num=15):
-        self.conn.select(directory, readonly=True)
+        num_emails = self.conn.select(directory, readonly=True)
+        num_emails = int(num_emails[1][0])
 
         typ, data = self.conn.search(None, 'ALL')
         ids = data[0]
@@ -46,17 +47,11 @@ class BaseFetcher(BaseConn):
             yield msg
 
     def fetch_from_msg_id(self, directory, msg_id):
-        self.conn.select(directory, readonly=True)
+        num_emails = self.conn.select(directory, readonly=True)
+        num_emails = int(num_emails[1][0])
 
-        typ, data = self.conn.search(None, 'ALL')
-        ids = data[0]
-        id_list = ids.split()
-
-        for i in id_list:
-            if int(i) < msg_id:
-                continue
-
-            msg = self.fetch_email(i, 'INBOX')
+        for i in range(msg_id, num_emails):
+            msg = self.fetch_email(str(i), 'INBOX')
 
             if msg is None:
                 continue

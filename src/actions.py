@@ -62,7 +62,6 @@ class MoveAction(BaseAction):
         self.conn.select(self.params['source'])
         self.conn.copy(msg.id, self.params['destination'])
         self.conn.store(msg.id, "+FLAGS", '(\Deleted)')
-        self.conn.expunge()
 
 
 def get_action(name):
