@@ -37,7 +37,7 @@ class BaseFetcher(BaseConn):
         typ, data = self.conn.search(None, 'ALL')
         ids = data[0]
         id_list = ids.split()
-        latest_email_id = int(id_list[-1])
+        latest_email_id = int(id_list[-max_num])
 
         for msg in self.fetch_from_msg_id(directory, latest_email_id):
             if msg is None:
@@ -64,12 +64,27 @@ class BaseFetcher(BaseConn):
             yield msg
 
 
-
 class GetLatestFetcher(BaseFetcher):
     codename = 'get_latest'
     _params = {
         'directory': 'INBOX',
-        'num_emails': 15
+        'num_emails': 15,
+    }
+
+    def fetch(self):
+        state = self.state
+
+        for msg in self.fetch_latest(
+                self.params['directory'],
+                max_num=self.params['num_emails']):
+            if msg is not None:
+                yield msg
+
+
+class StateFetcher(BaseFetcher):
+    codename = 'incremental'
+    _params = {
+        'directory': 'INBOX',
     }
 
     def fetch(self):

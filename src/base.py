@@ -89,11 +89,13 @@ class BaseConn(StatePreserver):
     def msg_to_dict(self, msg):
         subject = self._header_convert(msg['subject'])
         fro = self._header_convert(msg['from'])
+        to = self._header_convert(msg['to'])
 
         return {
             'id': int(msg.id),
             'subject': subject,
             'from': fro,
+            'to': to,
             'body': self.get_msg_payload(msg),
         }
 
