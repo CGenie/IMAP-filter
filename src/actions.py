@@ -4,6 +4,7 @@ from base import BaseConn
 
 class BaseAction(BaseConn):
     codename = 'base'
+    obj_type = 'action'
     _params = {}
 
     def __call__(self, msg):
@@ -13,11 +14,17 @@ class BaseAction(BaseConn):
 class PrintAction(BaseAction):
     codename = 'print'
     _params = {
-        'format': '%(from)s -- %(subject)s'
+        'format': '[%(id)s] %(from)s -- %(subject)s'
     }
 
     def action(self, msg):
-        print self.params['format'] % msg
+        try:
+            msg_dict = self.msg_to_dict(msg)
+        except Exception as e:
+            print ('ERROR: msg_to_dict failed: %s' % str(e))
+            return
+
+        print (self.params['format'] % msg_dict)
 
 
 class WriteToFileAction(BaseAction):

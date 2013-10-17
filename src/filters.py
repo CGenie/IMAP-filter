@@ -7,6 +7,7 @@ from base import BaseConn
 
 class BaseFilter(BaseConn):
     codename = 'base'
+    obj_type = 'filter'
     _params = {}
 
     def __call__(self, msg):
@@ -21,7 +22,7 @@ class DummyFilter(BaseFilter):
     _params = {}
 
     def filter(self, msg):
-        print 'Dummy: %r, %r' % (self.params, msg)
+        print ('Dummy: %r, %r' % (self.params, msg))
 
         return True
 

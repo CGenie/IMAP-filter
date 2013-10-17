@@ -1,21 +1,99 @@
 #!/usr/bin/env python
 
+from email import header
+import json
+import os
 
-class BaseConn(object):
+
+def config_dir():
+    home = os.environ['HOME']
+    d = os.path.join(home, '.IMAP-filter')
+
+    if not os.path.exists(d):
+        os.makedirs(d)
+
+    return d
+
+
+def config_file(f):
+    conf = os.path.join(config_dir(), f)
+
+    if not os.path.exists(conf):
+        with open(conf, 'a') as f:
+            f.write('{}\n')
+
+    return conf
+
+
+class StatePreserver(object):
     codename = 'base'
+    obj_type = 'state'
+
+    def __init__(self, definition_name, account_name, *args, **kwargs):
+        self.state_file = config_file('%s.json' % self.obj_type)
+        self.definition_name = definition_name
+        self.account_name = account_name
+
+    @property
+    def state(self):
+        ret = {}
+
+        with open(self.state_file, 'r') as f:
+            r = json.loads(f.read() or '{}')
+            ret = r.get(self.definition_name, {})
+
+            ret = ret.get(self.account_name, {})
+
+            ret = ret.get(self.codename, {})
+
+        return ret
+
+    def save_state(self, state):
+        with open(self.state_file, 'r') as f:
+            r = json.loads(f.read() or '{}')
+
+        with open(self.state_file, 'w') as f:
+            r.setdefault(self.definition_name, {})
+            defi = r[self.definition_name]
+            defi.setdefault(self.account_name, {})
+
+            act = defi[self.account_name]
+            act.setdefault(self.codename, {})
+            act[self.codename].update(state)
+
+            f.write(json.dumps(r, indent=4))
+
+
+class BaseConn(StatePreserver):
+    codename = 'base'
+    obj_type = 'conn'
     _params = {}
 
-    def __init__(self, conn=None):
+    def __init__(self, *args, **kwargs):
+        conn = kwargs.pop('conn', None)
+
+        super(BaseConn, self).__init__(*args, **kwargs)
+
         self.conn = conn
 
     def read_params(self, params):
         self.params = self._params.copy()
         self.params.update(params)
 
+    def _header_convert(self, txt):
+        if isinstance(txt, header.Header):
+            txt = txt.encode('utf-8')
+
+        return txt
+
     def msg_to_dict(self, msg):
+        subject = self._header_convert(msg['subject'])
+        fro = self._header_convert(msg['from'])
+
         return {
-            'subject': msg['subject'],
-            'from': msg['from'],
+            'id': int(msg.id),
+            'subject': subject,
+            'from': fro,
             'body': self.get_msg_payload(msg),
         }
 
@@ -23,10 +101,10 @@ class BaseConn(object):
         maintype = msg.get_content_maintype()
 
         if maintype == 'multipart':
-            return ''.join([
+            return u''.join([
                 self.get_msg_payload(part) for part in msg.get_payload()])
 
         elif maintype == 'text':
             return msg.get_payload()
 
-        return ''
+        return u''

@@ -7,6 +7,7 @@ from base import BaseConn
 
 class BaseFetcher(BaseConn):
     codename = 'base'
+    obj_type = 'fetcher'
     _params = {}
 
     def __call__(self):
@@ -20,7 +21,11 @@ class BaseFetcher(BaseConn):
 
         response_part = data[0]
         if isinstance(response_part, tuple):
-            ret = email.message_from_string(response_part[1])
+            s = response_part[1]
+            if isinstance(s, bytes):
+                ret = email.message_from_bytes(s)
+            else:
+                ret = email.message_from_string(s)
 
             ret.id = num
 
@@ -34,13 +39,30 @@ class BaseFetcher(BaseConn):
         id_list = ids.split()
         latest_email_id = int(id_list[-1])
 
-        for i in range(
-                latest_email_id,
-                latest_email_id - max_num,
-                -1):
-            msg = self.fetch_email(i, 'INBOX')
+        for msg in self.fetch_from_msg_id(directory, latest_email_id):
+            if msg is None:
+                continue
 
             yield msg
+
+    def fetch_from_msg_id(self, directory, msg_id):
+        self.conn.select(directory)
+
+        typ, data = self.conn.search(None, 'ALL')
+        ids = data[0]
+        id_list = ids.split()
+
+        for i in id_list:
+            if int(i) < msg_id:
+                continue
+
+            msg = self.fetch_email(i, 'INBOX')
+
+            if msg is None:
+                continue
+
+            yield msg
+
 
 
 class GetLatestFetcher(BaseFetcher):
@@ -51,10 +73,16 @@ class GetLatestFetcher(BaseFetcher):
     }
 
     def fetch(self):
-        for msg in self.fetch_latest(
+        state = self.state
+        latest_msg_id = state.get('latest_msg_id', 0)
+
+        for msg in self.fetch_from_msg_id(
                 self.params['directory'],
-                max_num=self.params['num_emails']):
+                latest_msg_id):
             yield msg
+
+            state['latest_msg_id'] = int(msg.id)
+            self.save_state(state)
 
 
 def get_fetcher(name):

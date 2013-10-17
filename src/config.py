@@ -3,6 +3,7 @@
 import json
 import os
 
+from base import config_file
 from actions import get_action
 from filters import get_filter
 from fetchers import get_fetcher
@@ -60,6 +61,7 @@ def parse_action(action):
 
 def parse_definition(name, definition, ret):
     ret[name] = {
+        'name': name,
         'fetcher': None,
         'filters': [],
         'actions': [],
@@ -84,17 +86,7 @@ def read_config():
         'plan': [],
     }
 
-    home = os.environ['HOME']
-    d = os.path.join(home, '.IMAP-filter')
-
-    if not os.path.exists(d):
-        os.makedirs(d)
-
-    conf = os.path.join(d, 'config.json')
-
-    if not os.path.exists(conf):
-        with open(conf, 'a') as f:
-            f.write('{}\n')
+    conf = config_file('config.json')
 
     with open(conf) as f:
         config = json.loads(f.read())
