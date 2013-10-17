@@ -32,6 +32,28 @@ class WriteToFileAction(BaseAction):
             f.write(self.params['format'] % self.msg_to_dict(msg))
 
 
+class CopyAction(BaseAction):
+    codename = 'copy'
+    _params = {
+        'destination': 'INBOX'
+    }
+
+    def action(self, msg):
+        self.conn.copy(msg.id, self.params['destination'])
+
+
+class MoveAction(BaseAction):
+    codename = 'move'
+    _params = {
+        'destination': 'INBOX'
+    }
+
+    def action(self, msg):
+        self.conn.copy(msg.id, self.params['destination'])
+        self.conn.store(msg.id, "+FLAGS", '(\Deleted)')
+        self.conn.expunge()
+
+
 def get_action(name):
     for klass in BaseAction.__subclasses__():
         if klass.codename == name:

@@ -14,16 +14,20 @@ class BaseFetcher(BaseConn):
             yield msg
 
     def fetch_email(self, num, directory):
-        self.conn.select(directory, True)
+        self.conn.select(directory)
 
         typ, data = self.conn.fetch(num, '(RFC822)')
 
         response_part = data[0]
         if isinstance(response_part, tuple):
-            return email.message_from_string(response_part[1])
+            ret = email.message_from_string(response_part[1])
+
+            ret.id = num
+
+            return ret
 
     def fetch_latest(self, directory, max_num=15):
-        self.conn.select(directory, True)
+        self.conn.select(directory)
 
         typ, data = self.conn.search(None, 'ALL')
         ids = data[0]

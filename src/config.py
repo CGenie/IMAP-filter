@@ -60,13 +60,11 @@ def parse_action(action):
 
 def parse_definition(name, definition, ret):
     ret[name] = {
-        'accounts': [],
         'fetcher': None,
         'filters': [],
         'actions': [],
     }
 
-    ret[name]['accounts'] = definition.get('accounts', [])
     ret[name]['fetcher'] = parse_fetcher(definition.get('fetcher', {}))
     for fltr in definition.get('filters', []):
         ret[name]['filters'].append(parse_filter(fltr))
@@ -74,11 +72,16 @@ def parse_definition(name, definition, ret):
         ret[name]['actions'].append(parse_action(action))
 
 
+def parse_plan(plan, ret):
+    ret.append(plan)
+
+
 def read_config():
     """Create base directories and read config file."""
     ret = {
         'accounts': {},
         'definitions': {},
+        'plan': [],
     }
 
     home = os.environ['HOME']
@@ -100,5 +103,8 @@ def read_config():
 
         for name, definition in config.get('definitions', {}).items():
             parse_definition(name, definition, ret['definitions'])
+
+        for plan in config.get('plan', []):
+            parse_plan(plan, ret['plan'])
         
     return ret

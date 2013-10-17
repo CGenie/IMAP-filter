@@ -7,8 +7,8 @@ from config import read_config
 def get_necessary_connections(conf):
     conns = {}
 
-    for name, definition in conf['definitions'].items():
-        for account in definition['accounts']:
+    for plan in conf['plan']:
+        for account in plan['accounts']:
             if account in conns:
                 continue
 
@@ -43,9 +43,16 @@ def call_actions(msg, actions, conn):
 
 
 def work(conf, conns):
-    for name, definition in conf['definitions'].items():
-        print 'Working on definition %s' % name
-        for account in definition['accounts']:
+    for i, plan in enumerate(conf['plan']):
+        print 'Working on plan %d' % i
+
+        def_name = plan['definition']
+        accounts = plan['accounts']
+        definition = conf['definitions'][def_name]
+
+        print 'Working on definition %s' % def_name
+
+        for account in accounts:
             conn = conns[account]
             f = definition['fetcher']
             fetcher = f['klass'](conn=conn)
