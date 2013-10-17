@@ -64,9 +64,10 @@ class RegexpMatchesFilter(BaseFilter):
                     flags |= getattr(re, flag.upper())
 
         try:
+            regexp = self.params['regexp'].replace('\\\\', '\\')
             return next(re.finditer(
-                self.params['regexp'],
-                val,
+                regexp,
+                val or '',
                 flags)) is not None
         except StopIteration:
             return False

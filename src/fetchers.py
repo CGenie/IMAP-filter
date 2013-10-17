@@ -15,7 +15,7 @@ class BaseFetcher(BaseConn):
             yield msg
 
     def fetch_email(self, num, directory):
-        self.conn.select(directory)
+        self.conn.select(directory, readonly=True)
 
         typ, data = self.conn.fetch(num, '(RFC822)')
 
@@ -32,7 +32,7 @@ class BaseFetcher(BaseConn):
             return ret
 
     def fetch_latest(self, directory, max_num=15):
-        self.conn.select(directory)
+        self.conn.select(directory, readonly=True)
 
         typ, data = self.conn.search(None, 'ALL')
         ids = data[0]
@@ -46,7 +46,7 @@ class BaseFetcher(BaseConn):
             yield msg
 
     def fetch_from_msg_id(self, directory, msg_id):
-        self.conn.select(directory)
+        self.conn.select(directory, readonly=True)
 
         typ, data = self.conn.search(None, 'ALL')
         ids = data[0]
@@ -94,6 +94,10 @@ class StateFetcher(BaseFetcher):
         for msg in self.fetch_from_msg_id(
                 self.params['directory'],
                 latest_msg_id):
+
+            if msg is None:
+                continue
+
             yield msg
 
             state['latest_msg_id'] = int(msg.id)

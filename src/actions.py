@@ -42,20 +42,24 @@ class WriteToFileAction(BaseAction):
 class CopyAction(BaseAction):
     codename = 'copy'
     _params = {
+        'source': 'INBOX',
         'destination': 'INBOX'
     }
 
     def action(self, msg):
+        self.conn.select(self.params['source'])
         self.conn.copy(msg.id, self.params['destination'])
 
 
 class MoveAction(BaseAction):
     codename = 'move'
     _params = {
-        'destination': 'INBOX'
+        'source': 'INBOX',
+        'destination': 'INBOX',
     }
 
     def action(self, msg):
+        self.conn.select(self.params['source'])
         self.conn.copy(msg.id, self.params['destination'])
         self.conn.store(msg.id, "+FLAGS", '(\Deleted)')
         self.conn.expunge()
