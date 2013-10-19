@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import email
+import re
 
 from base import BaseConn
 
@@ -10,9 +11,18 @@ class BaseFetcher(BaseConn):
     obj_type = 'fetcher'
     _params = {}
 
+    def __init__(self, *args, **kwargs):
+        super(BaseFetcher, self).__init__(*args, **kwargs)
+
+        self.uid_re = re.compile('\d+ \(UID (?P<uid>\d+)\)')
+
     def __call__(self):
         for msg in self.fetch():
             yield msg
+
+    def fetch_uid(self, num):
+        msg_uid = self.conn.fetch(num, '(UID)')
+        return self.uid_re.match(msg_uid[1][0].decode('utf-8')).group('uid')
 
     def fetch_email(self, num, directory):
         self.conn.select(directory, readonly=True)
@@ -29,34 +39,62 @@ class BaseFetcher(BaseConn):
 
             ret.id = num
 
+            ret.uid = self.fetch_uid(num)
+
             return ret
+
+    def fetch_directory_uids(self, directory):
+        num_emails = self.conn.select(directory, readonly=True)
+        num_emails = int(num_emails[1][0])
+
+        msg_id = int(msg_id)
+
+        for i in range(num_emails):
+            yield {
+                'uid': int(self.fetch_uid()),
+                'id': i
+            }
 
     def fetch_latest(self, directory, max_num=15):
         num_emails = self.conn.select(directory, readonly=True)
         num_emails = int(num_emails[1][0])
 
-        typ, data = self.conn.search(None, 'ALL')
-        ids = data[0]
-        id_list = ids.split()
-        latest_email_id = int(id_list[-max_num])
+        uids = list(self.fetch_directory_uids(directory))
 
-        for msg in self.fetch_from_msg_id(directory, latest_email_id):
-            if msg is None:
-                continue
+        uids.sort(lambda d: d['uid'])
 
-            yield msg
+        #typ, data = self.conn.search(None, 'ALL')
+        #typ, data = self.conn.sort('REVERSE DATE', 'UTF-8', 'ALL')
+
+        for d in uids[:-max_num]:
+            msg = self.fetch_email(str(d['id']), directory)
+
+            if msg is not None:
+                yield msg
 
     def fetch_from_msg_id(self, directory, msg_id):
         num_emails = self.conn.select(directory, readonly=True)
         num_emails = int(num_emails[1][0])
 
-        for i in range(msg_id, num_emails):
-            msg = self.fetch_email(str(i), 'INBOX')
+        msg_id = int(msg_id)
 
-            if msg is None:
-                continue
+        for i in range(num_emails):
+            uid = int(self.fetch_uid())
+            if uid >= msg_id:
+                msg = self.fetch_email(str(i), directory)
 
-            yield msg
+                if msg is None:
+                    continue
+
+                yield msg
+#
+#        for i in range(msg_id, num_emails):
+#            msg = self.fetch_email(str(i), directory)
+#
+#            if msg is None:
+#                continue
+#
+#            yield msg
 
 
 class GetLatestFetcher(BaseFetcher):

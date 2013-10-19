@@ -14,6 +14,7 @@ def create_connection(account):
     else:
         conn = imaplib.IMAP4(*params)
 
+    print ('Logging in as %(login)s' % account)
     conn.login(account['login'], account['password'])
 
     return conn

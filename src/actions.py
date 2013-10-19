@@ -60,7 +60,12 @@ class MoveAction(BaseAction):
 
     def action(self, msg):
         self.conn.select(self.params['source'])
-        self.conn.copy(msg.id, self.params['destination'])
+        #self.conn.uid('COPY', msg.uid, '"%s"' % self.params['destination'])
+        # RFC3501, Mailbox Naming (5.1):
+        # "Any character which is one of the atom-specials
+        # (see the Formal Syntax) will require that the mailbox name be
+        # represented as a quoted string or literal."
+        self.conn.copy(msg.id, '"%s"' % self.params['destination'])
         self.conn.store(msg.id, "+FLAGS", '(\Deleted)')
 
 
