@@ -103,10 +103,10 @@ class BaseConn(StatePreserver):
         maintype = msg.get_content_maintype()
 
         if maintype == 'multipart':
-            return u''.join([
+            return ''.join([
                 self.get_msg_payload(part) for part in msg.get_payload()])
 
         elif maintype == 'text':
             return msg.get_payload()
 
-        return u''
+        return ''
