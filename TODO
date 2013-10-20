@@ -1,0 +1,6 @@
+* chnage all relevant fetchers/actions to use msg UID instead of ID
+* do not fetch message BODY when not necessary
+* change config structure so that plan is based on specific account; this
+  way we would fetch messages only once for specific fetcher instead of
+  doing it over and over again
+* maybe some DB preserving of fetched messages would be nice
