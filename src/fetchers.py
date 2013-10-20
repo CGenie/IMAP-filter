@@ -43,6 +43,25 @@ class BaseFetcher(BaseConn):
 
             return ret
 
+    def fetch_email_bu_uid(self, uid, directory):
+        self.conn.select(directory, readonly=True)
+
+        typ, data = self.conn.uid.fetch(uid, '(RFC822)')
+
+        response_part = data[0]
+        if isinstance(response_part, tuple):
+            s = response_part[1]
+            if isinstance(s, bytes):
+                ret = email.message_from_bytes(s)
+            else:
+                ret = email.message_from_string(s)
+
+            ret.id = None
+
+            ret.uid = uid
+
+            return ret
+
     def fetch_directory_uids(self, directory):
         num_emails = self.conn.select(directory, readonly=True)
         num_emails = int(num_emails[1][0])
@@ -107,6 +126,9 @@ class BaseFetcher(BaseConn):
 
         typ, data = self.conn.search(None, '(UNSEEN)')
         #typ, data = self.conn.sort('REVERSE DATE', 'UTF-8', 'ALL')
+
+        uids = [self.fetch_uid(msgid)
+                for msgid in data[0].decode('utf-8').split(' ')]
 
         for msgid in data[0].decode('utf-8').split(' '):
             msg = self.fetch_email(msgid, directory)

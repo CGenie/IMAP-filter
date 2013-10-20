@@ -65,8 +65,12 @@ class MoveAction(BaseAction):
         # "Any character which is one of the atom-specials
         # (see the Formal Syntax) will require that the mailbox name be
         # represented as a quoted string or literal."
-        self.conn.copy(msg.id, '"%s"' % self.params['destination'])
-        self.conn.store(msg.id, "+FLAGS", '(\Deleted)')
+        if msg.id is None:
+            self.conn.uid.copy(msg.uid, '"%s"' % self.params['destination'])
+            self.conn.uid.store(msg.uid, "+FLAGS", '(\Deleted)')
+        else:
+            self.conn.copy(msg.id, '"%s"' % self.params['destination'])
+            self.conn.store(msg.id, "+FLAGS", '(\Deleted)')
 
 
 def get_action(name):
