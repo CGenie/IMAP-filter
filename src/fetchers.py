@@ -21,7 +21,7 @@ class BaseFetcher(BaseConn):
             yield msg
 
     def fetch_uid(self, num):
-        msg_uid = self.conn.fetch(num, '(UID)')
+        msg_uid = self.conn.fetch(str(num), '(UID)')
         return self.uid_re.match(msg_uid[1][0].decode('utf-8')).group('uid')
 
     def fetch_email(self, num, directory):
@@ -47,13 +47,18 @@ class BaseFetcher(BaseConn):
         num_emails = self.conn.select(directory, readonly=True)
         num_emails = int(num_emails[1][0])
 
-        msg_id = int(msg_id)
+        print ('Fetching directory uids, total of %d', num_emails)
 
-        for i in range(num_emails):
+        for i in range(1, num_emails + 1):
+            if i % 200 == 0:
+                print (i)
+
             yield {
-                'uid': int(self.fetch_uid()),
+                'uid': int(self.fetch_uid(i)),
                 'id': i
             }
+
+        print ('Uids done')
 
     def fetch_latest(self, directory, max_num=15):
         num_emails = self.conn.select(directory, readonly=True)
@@ -61,7 +66,7 @@ class BaseFetcher(BaseConn):
 
         uids = list(self.fetch_directory_uids(directory))
 
-        uids.sort(lambda d: d['uid'])
+        uids.sort(key=lambda d: d['uid'])
 
         #typ, data = self.conn.search(None, 'ALL')
         #typ, data = self.conn.sort('REVERSE DATE', 'UTF-8', 'ALL')
@@ -95,6 +100,34 @@ class BaseFetcher(BaseConn):
 #                continue
 #
 #            yield msg
+
+    def fetch_unseen(self, directory):
+        num_emails = self.conn.select(directory, readonly=True)
+        num_emails = int(num_emails[1][0])
+
+        typ, data = self.conn.search(None, '(UNSEEN)')
+        #typ, data = self.conn.sort('REVERSE DATE', 'UTF-8', 'ALL')
+
+        for msgid in data[0].decode('utf-8').split(' '):
+            msg = self.fetch_email(msgid, directory)
+
+            if msg is not None:
+                yield msg
+
+
+class UnseenFetcher(BaseFetcher):
+    codename = 'unseen'
+    _params = {
+        'directory': 'INBOX'
+    }
+
+    def fetch(self):
+        state = self.state
+
+        for msg in self.fetch_unseen(
+                self.params['directory']):
+            if msg is not None:
+                yield msg
 
 
 class GetLatestFetcher(BaseFetcher):
