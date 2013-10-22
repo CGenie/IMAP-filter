@@ -29,7 +29,7 @@ def parse_fetcher(fetcher):
         'params': {},
     }
 
-    ret['klass'] = get_fetcher(fetcher.get('type', 'get_latest'))
+    ret['klass'] = get_fetcher(fetcher.get('type', 'unseen'))
     ret['params'] = fetcher.get('params', {})
 
     return ret
