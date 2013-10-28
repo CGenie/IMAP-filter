@@ -80,16 +80,25 @@ class BaseConn(StatePreserver):
         self.params = self._params.copy()
         self.params.update(params)
 
-    def _header_convert(self, txt):
+    def _header_convert(self, txt, encoding=None):
+        if encoding is None:
+            encoding = 'utf-8'
+
         if isinstance(txt, header.Header):
-            txt = txt.encode('utf-8')
+            txt = txt.encode(encoding)
+        elif isinstance(txt, tuple):
+            txt = self._header_convert(txt[0], encoding=txt[1])
+        elif isinstance(txt, list):
+            txt = ' '.join(self._header_convert(l) for l in txt)
+        elif isinstance(txt, bytes):
+            txt = txt.decode(encoding)
 
         return txt
 
     def msg_to_dict(self, msg):
-        subject = self._header_convert(msg['subject'])
-        fro = self._header_convert(msg['from'])
-        to = self._header_convert(msg['to'])
+        subject = self._header_convert(header.decode_header(msg['subject']))
+        fro = self._header_convert(header.decode_header(msg['from']))
+        to = self._header_convert(header.decode_header(msg['to']))
 
         return {
             'id': int(msg.id),

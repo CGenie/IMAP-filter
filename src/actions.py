@@ -24,7 +24,10 @@ class PrintAction(BaseAction):
             print ('ERROR: msg_to_dict failed: %s' % str(e))
             return
 
-        print (self.params['format'] % msg_dict)
+        try:
+            print (self.params['format'] % msg_dict)
+        except UnicodeEncodeError as e:
+            print ('Failed to print: %s' % str(e))
 
 
 class WriteToFileAction(BaseAction):
