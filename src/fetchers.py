@@ -43,10 +43,10 @@ class BaseFetcher(BaseConn):
 
             return ret
 
-    def fetch_email_bu_uid(self, uid, directory):
+    def fetch_email_by_uid(self, uid, directory):
         self.conn.select(directory, readonly=True)
 
-        typ, data = self.conn.uid.fetch(uid, '(RFC822)')
+        typ, data = self.conn.uid('fetch', uid, '(RFC822)')
 
         response_part = data[0]
         if isinstance(response_part, tuple):
@@ -130,8 +130,8 @@ class BaseFetcher(BaseConn):
         uids = [self.fetch_uid(msgid)
                 for msgid in data[0].decode('utf-8').split(' ')]
 
-        for msgid in data[0].decode('utf-8').split(' '):
-            msg = self.fetch_email(msgid, directory)
+        for uid in uids:
+            msg = self.fetch_email_by_uid(uid, directory)
 
             if msg is not None:
                 yield msg

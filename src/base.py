@@ -101,7 +101,7 @@ class BaseConn(StatePreserver):
         to = self._header_convert(header.decode_header(msg['to']))
 
         return {
-            'id': int(msg.id),
+            'id': int(msg.id or 0),
             'subject': subject,
             'from': fro,
             'to': to,
